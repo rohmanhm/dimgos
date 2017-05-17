@@ -14,11 +14,10 @@ export const StyledDropzone = styled.div`
   justify-content: center;
   align-items: center;
   color: ${ color.default };
-  font-family: "Open Sans";
-  font-style: normal;
   font-weight: 600;
   font-size: 24px;
   text-align: center;
+  margin: 20px 0;
 `;
 
 class Dropzone extends React.Component<{}, null> {
