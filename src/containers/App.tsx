@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Dropzone from '../components/Dropzone';
 import Button from '../components/Button';
 import { color } from '../constants/styles';
+import { makeImage } from '../utils/image';
 
 const StyledInput = styled.input`
   background: #FFFFFF;
@@ -32,14 +33,24 @@ const DownloadOption = styled.div`
   align-items: center;
 `;
 
-class App extends React.Component<{}, null> {
+interface State {
+  imgSrc: String | void;
+};
+
+class App extends React.Component<{}, State> {
   public imgPreview: HTMLImageElement | void;
 
   constructor (props: {}) {
     super(props);
     this.handleOnDrop = this.handleOnDrop.bind(this);
     this.handlePaste = this.handlePaste.bind(this);
-    this.imgPreview = undefined;
+    this.handleReset = this.handleReset.bind(this);
+  }
+
+  componentDidMount () {
+    this.setState({
+      imgSrc: undefined
+    });
   }
 
   loadImage (url: string) {
@@ -80,7 +91,9 @@ class App extends React.Component<{}, null> {
         const reader = new FileReader();
         reader.onload = (event: any) => {
           if (event.target && event.target.result) {
-            (this.imgPreview as HTMLImageElement).src = event.target.result
+            this.setState({
+              imgSrc: event.target.result
+            });
           }
         };
         reader.readAsDataURL(blob);
@@ -93,9 +106,13 @@ class App extends React.Component<{}, null> {
     event.stopPropagation();
     event.preventDefault(); 
     const imageUrl = event.dataTransfer.getData('URL');
-    this.getImageBase64(imageUrl).then(result => {
-      (this.imgPreview as HTMLImageElement).src = result;
-    });
+    makeImage(imageUrl)
+      .catch(error => alert('Error, try to copy paste the image.'))
+      .then((img: HTMLImageElement) => {
+        this.setState({
+          imgSrc: img.src
+        });
+      });
   }
 
   handleNoop (event: any) { // tslint:disable-line no-any
@@ -104,10 +121,20 @@ class App extends React.Component<{}, null> {
   }
 
   handleReset () {
-    this.imgPreview = undefined;
+    this.setState({
+      imgSrc: undefined
+    });
   }
 
   render() {
+    let dropzoneProps = {};
+
+    if (this.state && this.state.imgSrc) {
+      dropzoneProps = Object.assign(dropzoneProps, {
+        bgImage: this.state.imgSrc
+      });
+    }
+
     return (
       <div
         className="App"
@@ -119,9 +146,8 @@ class App extends React.Component<{}, null> {
       >
         <Header />
         <div className="main">
-          <img ref={input => this.imgPreview = input} src="" alt=""/>
           <DownloadSection>
-            <Dropzone>
+            <Dropzone {...dropzoneProps}>
               Drag or paste image to here
             </Dropzone>
             <div className="optional-message" style={{textAlign: 'center'}}>
@@ -134,7 +160,7 @@ class App extends React.Component<{}, null> {
                 <label htmlFor="cb-autofilename">Auto file name</label>
               </div>
               <div className="button">
-                <Button bg={color.red}>Reset</Button>
+                <Button onClick={this.handleReset} bg={color.red}>Reset</Button>
                 <Button>Download</Button>
               </div>
             </DownloadOption>
