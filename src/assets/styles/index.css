@@ -1,0 +1,20 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #F3F3F3;
+  line-height: 1.4;
+}
+
+body,
+input {
+  font-family: 'Open Sans', sans-serif;
+}
+
+input,
+textarea {
+  outline: none;
+}
