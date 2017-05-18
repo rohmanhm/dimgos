@@ -2,6 +2,10 @@ import * as React from 'react';
 import styled from 'styled-components';
 import { color } from '../../constants/styles';
 
+export interface DropzonProps {
+  bgImage?: string;
+};
+
 export const StyledDropzone = styled.div`
   border: 4px dashed ${ color.default };
   box-sizing: border-box;
@@ -18,12 +22,20 @@ export const StyledDropzone = styled.div`
   font-size: 24px;
   text-align: center;
   margin: 20px 0;
+  backgroundImage: ${ (props: DropzonProps) => props.bgImage ? `url(${props.bgImage})` : '' };
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
 `;
 
-class Dropzone extends React.Component<{}, null> {
+class Dropzone extends React.Component<DropzonProps, null> {
+  constructor (props: Object) {
+    super(props);
+  }
+
   render() {
     return (
-      <StyledDropzone>
+      <StyledDropzone bgImage={(this.props as DropzonProps).bgImage}>
         {this.props.children}
       </StyledDropzone>
     );
