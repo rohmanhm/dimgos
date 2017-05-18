@@ -1,6 +1,8 @@
 import * as React from 'react';
 import '../assets/styles/App.css';
 import styled from 'styled-components';
+import lastText = require('last-text-url');
+import * as autobind from 'autobind-decorator';
 import Header from '../components/Header';
 import Dropzone from '../components/Dropzone';
 import Button from '../components/Button';
@@ -34,22 +36,19 @@ const DownloadOption = styled.div`
 `;
 
 interface State {
-  imgSrc: String | void;
+  imgSrc: string | void;
+  fileName: string | void;
 };
 
 class App extends React.Component<{}, State> {
-  public imgPreview: HTMLImageElement | void;
-
   constructor (props: {}) {
     super(props);
-    this.handleOnDrop = this.handleOnDrop.bind(this);
-    this.handlePaste = this.handlePaste.bind(this);
-    this.handleReset = this.handleReset.bind(this);
   }
 
   componentDidMount () {
     this.setState({
-      imgSrc: undefined
+      imgSrc: undefined,
+      fileName: undefined
     });
   }
 
@@ -82,6 +81,7 @@ class App extends React.Component<{}, State> {
   }
 
   /* tslint:disable */
+  @autobind
   handlePaste (event: any) {
     const items = (event.clipboardData || event.originalEvent.clipboardData).items;
     for (const index in items) {
@@ -92,7 +92,8 @@ class App extends React.Component<{}, State> {
         reader.onload = (event: any) => {
           if (event.target && event.target.result) {
             this.setState({
-              imgSrc: event.target.result
+              imgSrc: event.target.result,
+              fileName: Math.random().toString(36).substr(2, 5)
             });
           }
         };
@@ -102,37 +103,55 @@ class App extends React.Component<{}, State> {
   }
   /* tslint:enable */
 
+  @autobind
   handleOnDrop (event: any) { // tslint:disable-line no-any
     event.stopPropagation();
     event.preventDefault(); 
     const imageUrl = event.dataTransfer.getData('URL');
     makeImage(imageUrl)
-      .catch(error => alert('Error, try to copy paste the image.'))
+      .catch(error => alert('CORS Error, try to copy paste the image.'))
       .then((img: HTMLImageElement) => {
         this.setState({
-          imgSrc: img.src
+          imgSrc: img.src,
+          fileName: lastText(imageUrl)
         });
       });
   }
 
+  @autobind
   handleNoop (event: any) { // tslint:disable-line no-any
     event.stopPropagation();
     event.preventDefault(); 
   }
 
+  @autobind
   handleReset () {
     this.setState({
-      imgSrc: undefined
+      imgSrc: undefined,
+      fileName: undefined
     });
+  }
+
+  @autobind
+  handleDownload () {
+    const link = document.createElement('a');
+    link.download = (this.state.fileName as string);
+    link.href = (this.state.imgSrc as string);
+
+    link.click();
   }
 
   render() {
     let dropzoneProps = {};
+    if (this.state) {
+      if (this.state.imgSrc) {
+        dropzoneProps = Object.assign(dropzoneProps, {
+          bgImage: this.state.imgSrc
+        });
+      }
 
-    if (this.state && this.state.imgSrc) {
-      dropzoneProps = Object.assign(dropzoneProps, {
-        bgImage: this.state.imgSrc
-      });
+      const inputURL = document.getElementById('input-url');
+      (inputURL as HTMLInputElement).value = this.state.fileName || '';
     }
 
     return (
@@ -153,15 +172,20 @@ class App extends React.Component<{}, State> {
             <div className="optional-message" style={{textAlign: 'center'}}>
               <label htmlFor="input-url">Or just paste Image URL</label>
             </div>
-            <StyledInput id="input-url" type="text" placeholder="http://yourimagepath.com/image.jpg"/>
+            <StyledInput
+              id="input-url"
+              type="text"
+              placeholder="http://yourimagepath.com/image.jpg"
+            />
             <DownloadOption>
-              <div className="checkbox">
+              &nbsp;
+              {/*<div className="checkbox">
                 <input type="checkbox" id="cb-autofilename"/>
                 <label htmlFor="cb-autofilename">Auto file name</label>
-              </div>
+              </div>*/}
               <div className="button">
                 <Button onClick={this.handleReset} bg={color.red}>Reset</Button>
-                <Button>Download</Button>
+                <Button onClick={this.handleDownload}>Download</Button>
               </div>
             </DownloadOption>
           </DownloadSection>
